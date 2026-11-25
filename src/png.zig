@@ -41,8 +41,6 @@ test "png test 1" {
     try png.load("test/test.png", io, allocator, 10 * 1024 * 1024);
     defer png.deinit();
 
-    try png.extractIDAT();
-
     std.debug.print("buffer len: {}\nidat_buffer len: {}\n", .{ png.buffer.len, png.idat_buffer.len });
 }
 
@@ -52,19 +50,6 @@ test "png test 2" {
 
     var png: PNG = .{};
     try png.load("test/t3st.png", io, allocator, 10 * 1024 * 1024);
-    defer png.deinit();
-
-    try png.extractIDAT();
-
-    std.debug.print("buffer len: {}\nidat_buffer len: {}\n", .{ png.buffer.len, png.idat_buffer.len });
-}
-
-test "png test 3" {
-    const io = testing.io;
-    const allocator = testing.allocator;
-
-    var png: PNG = .{};
-    try png.load("test/test2.png", io, allocator, 10 * 1024 * 1024);
     defer png.deinit();
 
     try png.extractIDAT();
