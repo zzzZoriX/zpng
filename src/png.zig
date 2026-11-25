@@ -1,15 +1,6 @@
 const std = @import("std");
 const Io = std.Io;
 
-const png_signature = [_]u8{
-    137, 80, 78, 71, 13, 10, 26, 10
-};
-
-pub const PNGError = error{
-    InvalidPNG,
-    InvalidChunk,
-    NoAllocator,
-};
 
 pub const PNG = struct {
     buffer: []u8 = &.{},
@@ -38,49 +29,7 @@ pub const PNG = struct {
         self.* = .{};
     }
 
-    pub fn extractIDAT(self: *PNG) !void {
-        if(self.allocator == null) 
-            return PNGError.NoAllocator;
-
-        if(self.buffer.len < 8 or !std.mem.eql(u8, self.buffer[0..8], &png_signature))
-            return PNGError.InvalidPNG;
-
-        var result: std.ArrayList(u8) = .empty;
-        errdefer if(self.allocator) |allocator| 
-            result.deinit(allocator);
-
-        var offset: usize = 8;
-
-        while(offset < self.buffer.len) {
-            if(self.buffer.len - offset < 12)
-                return PNGError.InvalidChunk;
-
-            const data_length: usize = std.mem.readInt(u32, self.buffer[offset..][0..4], .big);
-            const chunk_type = self.buffer[offset + 4..offset + 8];
-
-            offset += 8;
-
-            if(data_length > self.buffer.len - offset - 4)
-                return PNGError.InvalidChunk;
-
-            const data = self.buffer[offset..offset + data_length];
-
-            if(std.mem.eql(u8, chunk_type, "IDAT")) {
-                if(self.allocator) |allocator|
-                    try result.appendSlice(allocator, data);
-            }
-
-            offset += data_length + 4;
-
-            if(std.mem.eql(u8, chunk_type, "IEND"))
-                break;
-        }
-
-        if(self.allocator) |allocator|
-            self.idat_buffer = try result.toOwnedSlice(allocator);
-    }
 };
-
 
 const testing = std.testing;
 
@@ -94,7 +43,7 @@ test "png test 1" {
 
     try png.extractIDAT();
 
-    std.debug.print("buffer len: {}\nidat_buffer len: {}\n", .{png.buffer.len, png.idat_buffer.len});
+    std.debug.print("buffer len: {}\nidat_buffer len: {}\n", .{ png.buffer.len, png.idat_buffer.len });
 }
 
 test "png test 2" {
@@ -107,7 +56,7 @@ test "png test 2" {
 
     try png.extractIDAT();
 
-    std.debug.print("buffer len: {}\nidat_buffer len: {}\n", .{png.buffer.len, png.idat_buffer.len});
+    std.debug.print("buffer len: {}\nidat_buffer len: {}\n", .{ png.buffer.len, png.idat_buffer.len });
 }
 
 test "png test 3" {
@@ -120,5 +69,5 @@ test "png test 3" {
 
     try png.extractIDAT();
 
-    std.debug.print("buffer len: {}\nidat_buffer len: {}\n", .{png.buffer.len, png.idat_buffer.len});
+    std.debug.print("buffer len: {}\nidat_buffer len: {}\n", .{ png.buffer.len, png.idat_buffer.len });
 }
